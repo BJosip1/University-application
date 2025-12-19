@@ -13,8 +13,20 @@ namespace Domain.Models
         public string Surname { get; set; }
         public string Email { get; set; }
         public string Major { get; set; }
+        public DateTime? BirthDate { get; set; }
         public DateTime EnrollmentDate { get; set; }
         public bool IsActive { get; set; }
-        public List<string> EnrolledCourses { get; set; }
+        
+        public int? UserId { get; set; }
+        public int? ProgramTypeId { get; set; }
+
+        #region Navigation Properties
+        public User? User { get; set; }
+        public ProgramType? ProgramType { get; set; }
+        #endregion
+
+        #region Reverse Navigation Properties
+        public ICollection<Course> EnrolledCourses { get; set; } = new List<Course>();
+        #endregion
     }
 }

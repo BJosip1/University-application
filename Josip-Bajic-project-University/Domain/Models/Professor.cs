@@ -12,8 +12,17 @@ namespace Domain.Models
         public string Name { get; set; }
         public string Surname { get; set; }
         public string Email { get; set; }
-        public string Department { get; set; }
-        public DateTime HireDate { get; set; }
-        public List<string> TeachingCourses { get; set; }
+        public string? Department { get; set; }
+        public DateTime? HireDate { get; set; }
+        
+        public int? UserId { get; set; }    
+
+        #region Navigation Properties
+        public User? User { get; set; }
+        #endregion
+
+        #region Reverse Navigation Properties
+        public ICollection<Course> TeachingCourses { get; set; } = new List<Course>();
+        #endregion
     }
 }
