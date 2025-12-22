@@ -49,7 +49,21 @@ namespace Infrastructure.Database.Configurations
 
             builder.HasMany(p => p.TeachingCourses)
                 .WithMany(c => c.Professors)
-                .UsingEntity(j => j.ToTable("ProfessorCourses"));
+            .UsingEntity<ProfessorCourse>(
+                 pc => pc.HasOne<Course>()
+                       .WithMany()
+                       .HasForeignKey(x => x.TeachingCoursesId)
+                       .OnDelete(DeleteBehavior.Cascade),
+                 pc => pc.HasOne<Professor>()
+                       .WithMany()
+                       .HasForeignKey(x => x.ProfessorsId)
+                       .OnDelete(DeleteBehavior.Cascade),
+                 pc =>
+                 {
+                     pc.ToTable("ProfessorCourses");
+                     pc.HasKey(x => new { x.ProfessorsId, x.TeachingCoursesId });
+                 }
+            );
         }
     }
 }

@@ -54,16 +54,29 @@ namespace Infrastructure.Database.Configurations
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            builder.HasOne(s=>s.ProgramType)
-                .WithMany(p => p.Students) 
-                .HasForeignKey(s=> s.ProgramTypeId)
+            builder.HasOne(s => s.ProgramType)
+                .WithMany(p => p.Students)
+                .HasForeignKey(s => s.ProgramTypeId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
 
             builder.HasMany(s => s.EnrolledCourses)
                 .WithMany(c => c.Students)
-                .UsingEntity(j=>j.ToTable("StudentCourses"));
-
+            .UsingEntity<StudentCourse>(
+                sc => sc.HasOne<Course>()
+                      .WithMany()
+                      .HasForeignKey(x => x.EnrolledCoursesId)
+                      .OnDelete(DeleteBehavior.Cascade),
+                sc => sc.HasOne<Student>()
+                      .WithMany()
+                      .HasForeignKey(x => x.StudentsId)
+                      .OnDelete(DeleteBehavior.Cascade),
+                sc =>
+                {
+                    sc.ToTable("StudentsCourses");
+                    sc.HasKey(x => new { x.StudentsId, x.EnrolledCoursesId });
+                }
+            );
         }
     }
     

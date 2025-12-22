@@ -158,7 +158,7 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "StudentCourses",
+                name: "StudentsCourses",
                 columns: table => new
                 {
                     EnrolledCoursesId = table.Column<int>(type: "int", nullable: false),
@@ -166,15 +166,15 @@ namespace Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_StudentCourses", x => new { x.EnrolledCoursesId, x.StudentsId });
+                    table.PrimaryKey("PK_StudentsCourses", x => new { x.StudentsId, x.EnrolledCoursesId });
                     table.ForeignKey(
-                        name: "FK_StudentCourses_Courses_EnrolledCoursesId",
+                        name: "FK_StudentsCourses_Courses_EnrolledCoursesId",
                         column: x => x.EnrolledCoursesId,
                         principalTable: "Courses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_StudentCourses_Students_StudentsId",
+                        name: "FK_StudentsCourses_Students_StudentsId",
                         column: x => x.StudentsId,
                         principalTable: "Students",
                         principalColumn: "Id",
@@ -213,11 +213,6 @@ namespace Infrastructure.Migrations
                 filter: "[UserId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StudentCourses_StudentsId",
-                table: "StudentCourses",
-                column: "StudentsId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Students_Email",
                 table: "Students",
                 column: "Email",
@@ -234,6 +229,11 @@ namespace Infrastructure.Migrations
                 column: "UserId",
                 unique: true,
                 filter: "[UserId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StudentsCourses_EnrolledCoursesId",
+                table: "StudentsCourses",
+                column: "EnrolledCoursesId");
         }
 
         /// <inheritdoc />
@@ -246,7 +246,7 @@ namespace Infrastructure.Migrations
                 name: "ProfessorCourses");
 
             migrationBuilder.DropTable(
-                name: "StudentCourses");
+                name: "StudentsCourses");
 
             migrationBuilder.DropTable(
                 name: "Professors");

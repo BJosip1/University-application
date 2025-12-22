@@ -11,5 +11,6 @@ namespace Application.Interfaces
         public DbSet<Log> Logs { get; set; }
         public DbSet<ProgramType> ProgramTypes { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<ProfessorCourse> ProfessorCourses { get; set; }
     }
 }
