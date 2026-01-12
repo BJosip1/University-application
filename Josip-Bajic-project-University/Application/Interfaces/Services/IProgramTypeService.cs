@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Application.Interfaces.Services;
 
-namespace Application.Services
+namespace Application.Interfaces.Services
 {
-    public class ProgramTypeService:IProgramTypeService
+    public interface IProgramTypeService
     {
     }
 }

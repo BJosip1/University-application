@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Models
+namespace Application.DTOs
 {
-    public class ProfessorCourse
+    public class ProfessorCourseDTO
     {
-        public int ProfessorsId { get; set; }
         public int TeachingCoursesId { get; set; }
+        public int ProfessorsId { get; set; }
     }
 }

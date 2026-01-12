@@ -12,5 +12,8 @@ namespace Application.Interfaces
         public DbSet<ProgramType> ProgramTypes { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<ProfessorCourse> ProfessorCourses { get; set; }
+        public DbSet<StudentCourse> StudentCourses { get; set; }
+
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

@@ -7,8 +7,9 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs
 {
-    public class PostStudentDTO
+    public class PutStudentDTO
     {
+        public int Id { get; set; }
         public string Name { get; set; }
         public string Surname { get; set; }
         public string Email { get; set; }
@@ -20,9 +21,9 @@ namespace Application.DTOs
 
         public Student ToModel()
         {
-   
             return new Student
             {
+                Id = Id,
                 Name = Name,
                 Surname = Surname,
                 Email = Email,

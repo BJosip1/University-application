@@ -16,7 +16,7 @@ namespace Domain.Models
         public DateTime? BirthDate { get; set; }
         public DateTime EnrollmentDate { get; set; }
         public bool IsActive { get; set; }
-        
+                
         public int? UserId { get; set; }
         public int? ProgramTypeId { get; set; }
 

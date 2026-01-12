@@ -17,6 +17,7 @@ namespace Infrastructure.Persistance
         public DbSet<ProgramType> ProgramTypes { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<ProfessorCourse> ProfessorCourses { get; set; }
+        public DbSet<StudentCourse> StudentCourses { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

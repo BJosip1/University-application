@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Application.Interfaces.Services;
 
-namespace Application.Services
+namespace Application.Interfaces
 {
-    public class ProgramTypeService:IProgramTypeService
+    public interface IUnitOfWork
     {
+        Task<int> SaveChangesAsync();
     }
 }

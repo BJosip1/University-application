@@ -1,4 +1,5 @@
 ﻿using Application.DTOs;
+using Application.Interfaces.Services;
 using Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,42 +10,76 @@ namespace Api.Controllers
     [ApiController]
     public class StudentController : ControllerBase
     {
-        //private StudentRepository _studentRepository;
-       
-        //public StudentController(StudentRepository studentRepository) 
-        //{
-        //    _studentRepository=studentRepository;
-        //}
+        private readonly IStudentService _studentService;
 
-        [HttpGet]
-        public IEnumerable<Student> GetAllStudents() 
+        public StudentController(IStudentService studentService)
         {
-            return Enumerable.Empty<Student>();
+            _studentService = studentService;
+        }
+
+        [HttpGet("allStudents")]
+        public async Task<IActionResult> GetAllStudents()
+        {
+            var result = await _studentService.GetAllStudents();
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
-        public Student GetStudentById(int id) 
+        public async Task<IActionResult> GetStudentById(int id)
         {
-            return new Student();
+            try
+            {
+                var result = await _studentService.GetStudentById(id);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound($"Student with ID {id} not found.");
+            }
         }
 
-        [HttpPost("new")]
-        public int AddStudent([FromBody] PostStudentDTO newStudent)
+        [HttpPost]
+        public async Task<IActionResult> PostStudent([FromBody] PostStudentDTO student)
         {
-            return 0;
+            var result = await _studentService.AddStudent(student);
+            if (result.Contains("required") || result.Contains("not found"))
+                return BadRequest(result);
+            return Ok(result);
         }
 
-        [HttpPut("edit/{id}")]
-        public int EditStudent(int id, [FromBody] PostStudentDTO student)
+        [HttpPut]
+        public async Task<IActionResult> EditStudent([FromBody] PutStudentDTO student)
         {
-            return 0;
+            var result = await _studentService.UpdateStudent(student);
+            if (result.Contains("required") || result.Contains("not found"))
+                return BadRequest(result);
+            return Ok(result);
         }
 
-        [HttpDelete("delete/{id}")]
-        public int DeleteStudent([FromRoute] int id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteStudent(int id)
         {
-            return 0; 
+            try
+            {
+                var result = await _studentService.DeleteStudent(id);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound($"Student with ID {id} not found.");
+            }
         }
 
+
+        [HttpPost("enroll")]
+        public async Task<IActionResult> EnrollStudent([FromBody] StudentCourseDTO enrollmentDto)
+        {
+            var result = await _studentService.EnrollStudentInCourse(enrollmentDto);
+
+            if (result.Contains("not found"))
+                return NotFound(result);
+
+            return Ok(result);
+        }
     }
 }
