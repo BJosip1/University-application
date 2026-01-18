@@ -1,5 +1,7 @@
 ﻿using Application.DTOs;
+using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Repositories;
 using Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +13,12 @@ namespace Api.Controllers
     public class StudentController : ControllerBase
     {
         private readonly IStudentService _studentService;
+        private readonly IProgramTypeRepository _programTypeRepository;
 
-        public StudentController(IStudentService studentService)
+        public StudentController(IStudentService studentService, IProgramTypeRepository programTypeRepository)
         {
             _studentService = studentService;
+            _programTypeRepository = programTypeRepository;
         }
 
         [HttpGet("allStudents")]
@@ -36,6 +40,18 @@ namespace Api.Controllers
             {
                 return NotFound($"Student with ID {id} not found.");
             }
+        }
+
+        [HttpGet("program-types")]
+        public async Task<IActionResult> GetProgramTypes()
+        {
+            var programTypes = await _programTypeRepository.GetAllProgramTypes();
+            var result = programTypes.Select(pt => new GetProgramTypeDTO
+            {
+                Id = pt.Id,
+                Title = pt.Title
+            });
+            return Ok(result);
         }
 
         [HttpPost]
@@ -74,12 +90,15 @@ namespace Api.Controllers
         [HttpPost("enroll")]
         public async Task<IActionResult> EnrollStudent([FromBody] StudentCourseDTO enrollmentDto)
         {
-            var result = await _studentService.EnrollStudentInCourse(enrollmentDto);
-
-            if (result.Contains("not found"))
-                return NotFound(result);
-
-            return Ok(result);
+            try
+            {
+                var result = await _studentService.EnrollStudentInCourse(enrollmentDto);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }

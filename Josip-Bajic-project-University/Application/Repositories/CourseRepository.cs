@@ -21,7 +21,7 @@ namespace Application.Repositories
 
         public async Task<Course> GetCourseById(int id)
         {
-            var course = await _dbContext.Courses.Include(c => c.Students).Include(c => c.Professors).FirstOrDefaultAsync(c => c.Id == id);
+            var course = await _dbContext.Courses.Include(c => c.Students).Include(c => c.Professors).AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
 
             if (course == null)
                 throw new KeyNotFoundException();
@@ -52,6 +52,23 @@ namespace Application.Repositories
                 throw new KeyNotFoundException();
 
             _dbContext.Courses.Remove(course);
+        }
+
+        public async Task AssignCourseToProfessor(int professorId, int courseId)
+        {
+            var course = await _dbContext.Courses.Include(c => c.Professors).FirstOrDefaultAsync(c => c.Id == courseId);
+
+            if (course == null)
+                throw new KeyNotFoundException($"Course {courseId} not found.");
+
+            var professor = await _dbContext.Professors.FindAsync(professorId);
+            if (professor == null)
+                throw new KeyNotFoundException($"Professor {professorId} not found.");
+
+            if (!course.Professors.Any(p => p.Id == professorId))
+            {
+                course.Professors.Add(professor);
+            }
         }
     }
 }

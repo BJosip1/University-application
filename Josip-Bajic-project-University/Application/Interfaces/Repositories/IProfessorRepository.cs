@@ -1,4 +1,5 @@
-﻿using Domain.Models;
+﻿using Application.DTOs;
+using Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,5 @@ namespace Application.Interfaces.Repositories
         void CreateProfessor(Professor professor);
         Task UpdateProfessor(Professor professor);
         Task DeleteProfessor(int id);
-        Task AssignProfessorToCourse(int professorId, int courseId);
     }
 }

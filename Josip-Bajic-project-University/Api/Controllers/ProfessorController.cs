@@ -68,13 +68,18 @@ namespace Api.Controllers
                 return NotFound($"Professor with ID {id} not found.");
             }
         }
-        [HttpPost("assing")]
+        [HttpPost("assign")]
         public async Task<IActionResult> AssignProfessorToCourse([FromBody] ProfessorCourseDTO assignmentDto)
         {
-            var result = await _professorService.AssignProfessorToCourse(assignmentDto);
-            if (result.Contains("not found"))
-                return NotFound(result);
-            return Ok(result);
+            try
+            {
+                var result = await _professorService.AssignProfessorToCourse(assignmentDto);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }

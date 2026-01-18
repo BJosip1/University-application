@@ -1,5 +1,6 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.DTOs;
 using Application.Interfaces;
+using Application.Interfaces.Repositories;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -62,24 +63,7 @@ namespace Application.Repositories
                 throw new KeyNotFoundException();
 
             _dbContext.Professors.Remove(professor);
-        }
-
-        public async Task AssignProfessorToCourse(int professorId, int courseId)
-        {
-            var professor = await _dbContext.Professors.Include(p => p.TeachingCourses).FirstOrDefaultAsync(p => p.Id == professorId);
-
-            if (professor == null)
-                throw new KeyNotFoundException($"Professor {professorId} not found.");
-
-            var course = await _dbContext.Courses.FindAsync(courseId);
-            if (course == null)
-                throw new KeyNotFoundException($"Course {courseId} not found.");
-
-            if (!professor.TeachingCourses.Any(c => c.Id == courseId))
-            {
-                professor.TeachingCourses.Add(course);
-            }
-        }
+        }        
     }
 }
 

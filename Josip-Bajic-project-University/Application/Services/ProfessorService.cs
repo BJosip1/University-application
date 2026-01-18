@@ -4,6 +4,7 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Repositories;
 using Domain.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services
 {
@@ -35,7 +36,7 @@ namespace Application.Services
         public async Task<string> AddProfessor(PostProfessorDTO professor)
         {
             var professorEntity = professor.ToModel();
-            var validationResult = await CreateValidation(professorEntity);
+            var validationResult = await CreateOrUpdateValidation(professorEntity);
             if (validationResult != null)
                 return validationResult;
 
@@ -47,7 +48,7 @@ namespace Application.Services
         public async Task<string> UpdateProfessor(PutProfessorDTO professor)
         {
             var professorEntity = professor.ToModel();
-            var validationResult = await UpdateValidation(professorEntity);
+            var validationResult = await CreateOrUpdateValidation(professorEntity);
             if (validationResult != null)
                 return validationResult;
 
@@ -65,20 +66,15 @@ namespace Application.Services
 
         public async Task<string> AssignProfessorToCourse(ProfessorCourseDTO assignmentDto)
         {
-            try
-            {
-                await _professorRepository.AssignProfessorToCourse(
+           
+                await _courseRepository.AssignCourseToProfessor(
                     assignmentDto.ProfessorsId,
                     assignmentDto.TeachingCoursesId);
 
                 await _unitOfWork.SaveChangesAsync();
 
-                return $"Professor {assignmentDto.ProfessorsId} successfully assigned to course {assignmentDto.TeachingCoursesId}";
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return ex.Message;
-            }
+                return $"Course {assignmentDto.TeachingCoursesId} successfully assigned to professor {assignmentDto.ProfessorsId}";
+            
         }
 
         private GetProfessorDTO MapToDTO(Professor professor)
@@ -106,48 +102,39 @@ namespace Application.Services
             };
         }
 
-
-        private async Task<string> CreateValidation(Professor professor)
+        private async Task<string> CreateOrUpdateValidation(Professor professor)
         {
             if (string.IsNullOrWhiteSpace(professor.Name))
                 return "Professor name is required.";
+            if (professor.Name.Length > 100)
+                return "Professor name cannot exceed 100 characters.";
             if (string.IsNullOrWhiteSpace(professor.Surname))
                 return "Professor surname is required.";
+            if (professor.Surname.Length > 100)
+                return "Professor surname cannot exceed 100 characters.";
             if (string.IsNullOrWhiteSpace(professor.Email))
                 return "Professor email is required.";
+            if (professor.Email.Length > 150)
+                return "Professor email cannot exceed 150 characters.";
+            if (!await IsEmailUnique(professor.Email, professor.Id))
+                return "Professor email must be unique.";
+            if (string.IsNullOrWhiteSpace(professor.Department))
+                return "Professor department is required.";
             if (!string.IsNullOrWhiteSpace(professor.Department) && professor.Department.Length > 100)
                 return "Department name cannot exceed 100 characters.";
-            if (professor.HireDate.HasValue && professor.HireDate.Value > DateTime.Now)
+            if (!professor.HireDate.HasValue)
+                return "Professor hire date is required.";
+            if (professor.HireDate.Value > DateTime.Now)
                 return "Hire date cannot be in the future.";
 
             return null;
         }
 
-        private async Task<string> UpdateValidation(Professor professor)
+        private async Task<bool> IsEmailUnique(string email, int? professorId = null)
         {
-            try
-            {
-                var existingProfessor = await _professorRepository.GetProfessorById(professor.Id);
-                if (existingProfessor == null)
-                    return "Professor not found.";
-            }
-            catch (KeyNotFoundException)
-            {
-                return "Professor not found.";
-            }
-
-            if (string.IsNullOrWhiteSpace(professor.Name))
-                return "Name is required.";
-            if (string.IsNullOrWhiteSpace(professor.Surname))
-                return "Surname is required.";
-            if (string.IsNullOrWhiteSpace(professor.Email))
-                return "Email is required.";
-            if (!string.IsNullOrWhiteSpace(professor.Department) && professor.Department.Length > 100)
-                return "Department name cannot exceed 100 characters.";
-            if (professor.HireDate.HasValue && professor.HireDate.Value > DateTime.Now)
-                return "Hire date cannot be in the future.";
-
-            return null;
+            var professors = await _professorRepository.GetProfessors();
+            var existingProfessor = professors.FirstOrDefault(p => p.Email == email && (!professorId.HasValue || p.Id != professorId));
+            return existingProfessor == null;
         }
     }
 }

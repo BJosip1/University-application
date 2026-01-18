@@ -1,8 +1,9 @@
-﻿using Application.Interfaces;
+﻿using Application.DTOs;
+using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Repositories;
 using Domain.Models;
-using Application.DTOs;
 
 namespace Application.Services
 {
@@ -37,7 +38,7 @@ namespace Application.Services
         {
             var studentEntity = student.ToModel();
 
-            var validationResult = await CreateValidation(studentEntity);
+            var validationResult = await CreateOrUpdateValidation(studentEntity);
             if (validationResult != null)
                 return validationResult;
 
@@ -50,7 +51,7 @@ namespace Application.Services
         {
             var studentEntity = student.ToModel();
 
-            var validationResult = await UpdateValidation(studentEntity);
+            var validationResult = await CreateOrUpdateValidation(studentEntity);
             if (validationResult != null)
                 return validationResult;
 
@@ -68,8 +69,7 @@ namespace Application.Services
 
         public async Task<string> EnrollStudentInCourse(StudentCourseDTO enrollmentDto)
         {
-            try
-            {
+
                 await _studentRepository.EnrollStudentInCourse(
                     enrollmentDto.StudentsId,
                     enrollmentDto.EnrolledCoursesId);
@@ -77,11 +77,7 @@ namespace Application.Services
                 await _unitOfWork.SaveChangesAsync();
 
                 return $"Student {enrollmentDto.StudentsId} successfully enrolled in course {enrollmentDto.EnrolledCoursesId}";
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return ex.Message;
-            }
+            
         }
 
         private GetStudentDTO MapToDTO(Student student)
@@ -117,44 +113,49 @@ namespace Application.Services
             };
         }
 
-        private async Task<string> CreateValidation(Student student)
+        private async Task<string> CreateOrUpdateValidation(Student student)
         {
             if (string.IsNullOrWhiteSpace(student.Name))
                 return "Name is required.";
+            if (student.Name.Length > 100)
+                return "Student name cannot exceed 100 characters.";
             if (string.IsNullOrWhiteSpace(student.Surname))
                 return "Surname is required.";
+            if (student.Surname.Length > 100)
+                return "Student surname cannot exceed 100 characters.";
             if (string.IsNullOrWhiteSpace(student.Email))
                 return "Email is required.";
+            if (student.Email.Length > 150)
+                return "Student email cannot exceed 150 characters.";
+            if (!await IsEmailUnique(student.Email, student.Id))
+                return "Student email must be unique.";
             if (string.IsNullOrWhiteSpace(student.Major))
                 return "Major is required.";
+            if (student.Major.Length > 100)
+                return "Student major cannot exceed 100 characters.";
+
+            if (!student.BirthDate.HasValue)
+                return "Student birth date is required.";
+            if (student.BirthDate.Value > DateTime.Now)
+                return "Birth date cannot be in the future.";
+
+            if (student.EnrollmentDate==DateTime.MinValue)
+                return "Student enrollment date is required.";
+            if (student.EnrollmentDate > DateTime.Now)
+                return "Enrollment date cannot be in the future.";
+            if (!student.ProgramTypeId.HasValue)
+                return "Program Type is required.";
+            if (student.ProgramTypeId > 6 || student.ProgramTypeId < 1)
+                return "Program Type ID can not be greater than 6 and less than 1.";
 
             return null;
         }
 
-        private async Task<string> UpdateValidation(Student student)
+        private async Task<bool> IsEmailUnique(string email, int? studentId = null)
         {
-            try
-            {
-                var existingStudent = await _studentRepository.GetStudentById(student.Id);
-                if (existingStudent == null)
-                    return "Student not found.";
-            }
-            catch (KeyNotFoundException)
-            {
-                return "Student not found.";
-            }
-
-            if (string.IsNullOrWhiteSpace(student.Name))
-                return "Name is required.";
-            if (string.IsNullOrWhiteSpace(student.Surname))
-                return "Surname is required.";
-            if (string.IsNullOrWhiteSpace(student.Email))
-                return "Email is required.";
-            if (string.IsNullOrWhiteSpace(student.Major))
-                return "Major is required.";
-
-            return null;
+            var students = await _studentRepository.GetStudents();
+            var existingStudent = students.FirstOrDefault(p => p.Email == email && (!studentId.HasValue || p.Id != studentId));
+            return existingStudent == null;
         }
-
     }
 }
