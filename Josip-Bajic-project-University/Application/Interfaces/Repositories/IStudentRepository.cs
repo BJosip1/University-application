@@ -14,6 +14,6 @@ namespace Application.Interfaces.Repositories
         void CreateStudent(Student student);
         Task UpdateStudent(Student student);
         Task DeleteStudent(int id);
-        Task EnrollStudentInCourse(int studentId, int courseId);
+        Task AssignCourseToStudent(int studentId, int courseId);
     }
 }

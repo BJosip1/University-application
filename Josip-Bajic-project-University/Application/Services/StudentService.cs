@@ -1,8 +1,8 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
-using Application.Repositories;
 using Domain.Models;
 
 namespace Application.Services
@@ -22,62 +22,65 @@ namespace Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IEnumerable<GetStudentDTO>> GetAllStudents()
+        public async Task<Result<IEnumerable<GetStudentDTO>>> GetAllStudents()
         {
             var students = await _studentRepository.GetStudents();
-            return students.Select(s => MapToDTO(s)).ToList();
+            var studentDTOs = students.Select(p => MapToDTO(p));
+            return Result<IEnumerable<GetStudentDTO>>.Success(studentDTOs);
         }
 
-        public async Task<GetStudentDTO> GetStudentById(int id)
+        public async Task<Result<GetStudentDTO>> GetStudentById(int id)
         {
             var student = await _studentRepository.GetStudentById(id);
-            return MapToDTO(student);
+            var studentDTO = MapToDTO(student);
+            return Result<GetStudentDTO>.Success(studentDTO);
         }
 
-        public async Task<string> AddStudent(PostStudentDTO student)
+        public async Task<Result<object>> AddStudent(PostStudentDTO student)
         {
             var studentEntity = student.ToModel();
 
             var validationResult = await CreateOrUpdateValidation(studentEntity);
-            if (validationResult != null)
-                return validationResult;
+            if (!validationResult.IsSuccess)
+                return Result<object>.Failure(validationResult.ValidationItems);
 
             _studentRepository.CreateStudent(studentEntity);
             await _unitOfWork.SaveChangesAsync();
-            return $"Student successfully created with Id: {studentEntity.Id}";
+            return Result<object>.Success();
         }
 
-        public async Task<string> UpdateStudent(PutStudentDTO student)
+        public async Task<Result<object>> UpdateStudent(PutStudentDTO student)
         {
             var studentEntity = student.ToModel();
 
             var validationResult = await CreateOrUpdateValidation(studentEntity);
-            if (validationResult != null)
-                return validationResult;
+            if (!validationResult.IsSuccess)
+                return Result<object>.Failure(validationResult.ValidationItems);
 
             await _studentRepository.UpdateStudent(studentEntity);
             await _unitOfWork.SaveChangesAsync();
-            return $"Successfully updated student with Id: {studentEntity.Id}";
+
+            return Result<object>.Success();
         }
 
-        public async Task<string> DeleteStudent(int id)
+        public async Task<Result<object>> DeleteStudent(int id)
         {
             await _studentRepository.DeleteStudent(id);
             await _unitOfWork.SaveChangesAsync();
-            return $"Successfully deleted student with Id: {id}";
+            return Result<object>.Success();
         }
 
-        public async Task<string> EnrollStudentInCourse(StudentCourseDTO enrollmentDto)
+        public async Task<Result<object>> EnrollStudentInCourse(StudentCourseDTO enrollmentDto)
         {
 
-                await _studentRepository.EnrollStudentInCourse(
+                await _studentRepository.AssignCourseToStudent(
                     enrollmentDto.StudentsId,
                     enrollmentDto.EnrolledCoursesId);
 
                 await _unitOfWork.SaveChangesAsync();
 
-                return $"Student {enrollmentDto.StudentsId} successfully enrolled in course {enrollmentDto.EnrolledCoursesId}";
-            
+                return Result<object>.Success();
+
         }
 
         private GetStudentDTO MapToDTO(Student student)
@@ -113,42 +116,47 @@ namespace Application.Services
             };
         }
 
-        private async Task<string> CreateOrUpdateValidation(Student student)
+        private async Task<ValidationResult> CreateOrUpdateValidation(Student student)
         {
+            var result = new ValidationResult();
             if (string.IsNullOrWhiteSpace(student.Name))
-                return "Name is required.";
+                result.ValidationItems.Add("Student name is required.");
             if (student.Name.Length > 100)
-                return "Student name cannot exceed 100 characters.";
+                result.ValidationItems.Add("Student name cannot exceed 100 characters.");
+
             if (string.IsNullOrWhiteSpace(student.Surname))
-                return "Surname is required.";
+                result.ValidationItems.Add("Student surname is required.");
             if (student.Surname.Length > 100)
-                return "Student surname cannot exceed 100 characters.";
+                result.ValidationItems.Add("Student surname cannot exceed 100 characters.");
+
             if (string.IsNullOrWhiteSpace(student.Email))
-                return "Email is required.";
+                result.ValidationItems.Add("Student email is required.");
             if (student.Email.Length > 150)
-                return "Student email cannot exceed 150 characters.";
+                result.ValidationItems.Add("Student email cannot exceed 150 characters.");
             if (!await IsEmailUnique(student.Email, student.Id))
-                return "Student email must be unique.";
+                result.ValidationItems.Add("Student email must be unique.");
+
             if (string.IsNullOrWhiteSpace(student.Major))
-                return "Major is required.";
+                result.ValidationItems.Add("Student major is required.");
             if (student.Major.Length > 100)
-                return "Student major cannot exceed 100 characters.";
+                result.ValidationItems.Add("Student major cannot exceed 100 characters.");
 
             if (!student.BirthDate.HasValue)
-                return "Student birth date is required.";
+                result.ValidationItems.Add("Student birth date is required.");
             if (student.BirthDate.Value > DateTime.Now)
-                return "Birth date cannot be in the future.";
+                result.ValidationItems.Add("Birth date cannot be in the future.");
 
             if (student.EnrollmentDate==DateTime.MinValue)
-                return "Student enrollment date is required.";
+                result.ValidationItems.Add("Student enrollment date is required.");
             if (student.EnrollmentDate > DateTime.Now)
-                return "Enrollment date cannot be in the future.";
-            if (!student.ProgramTypeId.HasValue)
-                return "Program Type is required.";
-            if (student.ProgramTypeId > 6 || student.ProgramTypeId < 1)
-                return "Program Type ID can not be greater than 6 and less than 1.";
+                result.ValidationItems.Add("Enrollment date cannot be in the future.");
 
-            return null;
+            if (!student.ProgramTypeId.HasValue)
+                result.ValidationItems.Add("Student program type is required."); 
+            if (student.ProgramTypeId > 6 || student.ProgramTypeId < 1)
+                result.ValidationItems.Add("Program Type ID can not be greater than 6 and less than 1.");
+
+            return result;
         }
 
         private async Task<bool> IsEmailUnique(string email, int? studentId = null)

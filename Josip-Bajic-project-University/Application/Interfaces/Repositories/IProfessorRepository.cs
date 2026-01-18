@@ -15,5 +15,6 @@ namespace Application.Interfaces.Repositories
         void CreateProfessor(Professor professor);
         Task UpdateProfessor(Professor professor);
         Task DeleteProfessor(int id);
+        Task AssignCourseToProfessor(int professorId, int courseId);
     }
 }

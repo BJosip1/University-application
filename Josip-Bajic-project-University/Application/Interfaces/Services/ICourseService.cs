@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Domain.Models;
 using System;
 using System.Collections.Generic;
@@ -10,10 +11,10 @@ namespace Application.Interfaces.Services
 {
     public interface ICourseService
     {
-        Task<IEnumerable<Course>> GetAllCourses();
-        Task<Course?> GetCourseById(int id);
-        Task<string> AddCourse(PostCourseDTO course);
-        Task<string> UpdateCourse(PutCourseDTO course);
-        Task<string> DeleteCourse(int id);
+        Task<Result<IEnumerable<GetCourseDTO>>> GetAllCourses();
+        Task<Result<GetCourseDTO>> GetCourseById(int id);
+        Task<Result<object>> AddCourse(PostCourseDTO course);
+        Task<Result<object>> UpdateCourse(PutCourseDTO course);
+        Task<Result<object>> DeleteCourse(int id);
     }
 }

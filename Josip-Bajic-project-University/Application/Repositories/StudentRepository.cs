@@ -2,16 +2,19 @@
 using Application.Interfaces.Repositories;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Repositories
 {
     public class StudentRepository: IStudentRepository
     {
         private readonly IApplicationDbContext _dbContext;
+        private readonly ILogger<StudentRepository> _logger;
 
-        public StudentRepository(IApplicationDbContext dbContext)
+        public StudentRepository(IApplicationDbContext dbContext, ILogger<StudentRepository> logger)
         {
             _dbContext = dbContext;
+            _logger = logger;
         }
 
 
@@ -37,7 +40,7 @@ namespace Application.Repositories
                 .FirstOrDefaultAsync(s => s.Id == id); 
 
             if (student == null)
-                throw new KeyNotFoundException();
+                throw new KeyNotFoundException($"Cannot find student with Id: {id}");
 
             return student;
         }
@@ -73,7 +76,7 @@ namespace Application.Repositories
         }
 
 
-        public async Task EnrollStudentInCourse(int studentId, int courseId)
+        public async Task AssignCourseToStudent(int studentId, int courseId)
         {
             var student = await _dbContext.Students.Include(s => s.EnrolledCourses).FirstOrDefaultAsync(s => s.Id == studentId);
 
@@ -83,6 +86,7 @@ namespace Application.Repositories
             var course = await _dbContext.Courses.FindAsync(courseId);
             if (course == null)
                 throw new KeyNotFoundException($"Course {courseId} not found.");
+
             if (!student.EnrolledCourses.Any(c => c.Id == courseId))
             {
                 student.EnrolledCourses.Add(course);

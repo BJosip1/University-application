@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
@@ -16,69 +17,84 @@ namespace Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IEnumerable<Course>> GetAllCourses()
+        public async Task<Result<IEnumerable<GetCourseDTO>>> GetAllCourses()
         {
-            return await _courseRepository.GetAllCourses();
+            var courses = await _courseRepository.GetAllCourses();
+            var courseDTOs = courses.Select(c => MapToDTO(c));
+            return Result<IEnumerable<GetCourseDTO>>.Success(courseDTOs);
         }
 
-        public async Task<Course?> GetCourseById(int id)
+        public async Task<Result<GetCourseDTO>> GetCourseById(int id)
         {
-            return await _courseRepository.GetCourseById(id);
+            var course = await _courseRepository.GetCourseById(id);
+            var courseDTO = MapToDTO(course);
+            return Result<GetCourseDTO>.Success(courseDTO);
         }
 
-        public async Task<string> AddCourse(PostCourseDTO course)
-        {
-            var courseEntity = course.ToModel();
-            var validationResult =await CreateOrUpdateValidation(courseEntity);
-
-            if (validationResult != null)
-                return validationResult;
-
-            _courseRepository.CreateCourse(courseEntity);
-            await _unitOfWork.SaveChangesAsync();
-
-            return $"Course successfully created with Id: {courseEntity.Id}";
-        }
-
-        public async Task<string> UpdateCourse(PutCourseDTO course)
+        public async Task<Result<object>> AddCourse(PostCourseDTO course)
         {
             var courseEntity = course.ToModel();
             var validationResult = await CreateOrUpdateValidation(courseEntity);
+            if (!validationResult.IsSuccess)
+                return Result<object>.Failure(validationResult.ValidationItems);
 
-            if (validationResult != null)
-                return validationResult;
+            _courseRepository.CreateCourse(courseEntity);
+            await _unitOfWork.SaveChangesAsync();
+            return Result<object>.Success();
+        }
+
+        public async Task<Result<object>> UpdateCourse(PutCourseDTO course)
+        {
+            var courseEntity = course.ToModel();
+            var validationResult = await CreateOrUpdateValidation(courseEntity);
+            if (!validationResult.IsSuccess)
+                return Result<object>.Failure(validationResult.ValidationItems);
 
             await _courseRepository.UpdateCourse(courseEntity);
             await _unitOfWork.SaveChangesAsync();
-
-            return $"Successfully updated course with Id: {courseEntity.Id}";
+            return Result<object>.Success();
         }
 
-        public async Task<string> DeleteCourse(int id)
+        public async Task<Result<object>> DeleteCourse(int id)
         {
             await _courseRepository.DeleteCourse(id);
             await _unitOfWork.SaveChangesAsync();
-
-            return $"Successfully deleted course with Id: {id}";
+            return Result<object>.Success();
         }
 
-        private async Task<string> CreateOrUpdateValidation(Course course)
+        private GetCourseDTO MapToDTO(Course course)
         {
+            if (course == null)
+                return null;
+
+            return new GetCourseDTO
+            {
+                Id = course.Id,
+                Name = course.Name,
+                CourseCode = course.CourseCode,
+                Description = course.Description
+            };
+        }
+
+        private async Task<ValidationResult> CreateOrUpdateValidation(Course course)
+        {
+            var result = new ValidationResult();
             if (string.IsNullOrWhiteSpace(course.Name))
-                return "Course name is required.";
+                result.ValidationItems.Add("Course name is required.");
             if (course.Name.Length > 100)
-                return "Course name cannot exceed 100 characters.";
+                result.ValidationItems.Add("Course name cannot exceed 100 characters.");
 
             if (string.IsNullOrWhiteSpace(course.CourseCode))
-                return "Course code is required.";
+                result.ValidationItems.Add("Course code is required.");
             if (course.CourseCode.Length > 10)
-                return "Course code cannot exceed 10 characters.";
-            if (string.IsNullOrWhiteSpace(course.Description))
-                return "Description is required.";
-            if (!string.IsNullOrWhiteSpace(course.Description) && course.Description.Length > 1000) 
-                return "Course description cannot exceed 1000 characters.";
+                result.ValidationItems.Add("Course code cannot exceed 10 characters.");
 
-            return null;
+            if (string.IsNullOrWhiteSpace(course.Description))
+                result.ValidationItems.Add("Description is required.");
+            if (!string.IsNullOrWhiteSpace(course.Description) && course.Description.Length > 1000)
+                result.ValidationItems.Add("Course description cannot exceed 1000 characters.");
+
+            return result;
         }
 
     }

@@ -1,20 +1,15 @@
-﻿using Application.DTOs;
-using Domain.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Application.Common;
+using Application.DTOs;
 
 namespace Application.Interfaces.Services
 {
     public interface IStudentService
     {
-        Task<IEnumerable<GetStudentDTO>> GetAllStudents();
-        Task<GetStudentDTO> GetStudentById(int id);
-        Task<string> AddStudent(PostStudentDTO student);
-        Task<string> UpdateStudent(PutStudentDTO student);
-        Task<string> DeleteStudent(int id);
-        Task<string> EnrollStudentInCourse(StudentCourseDTO enrollmentDto);
+        Task<Result<IEnumerable<GetStudentDTO>>> GetAllStudents();
+        Task<Result<GetStudentDTO>> GetStudentById(int id);
+        Task<Result<object>> AddStudent(PostStudentDTO student);
+        Task<Result<object>> UpdateStudent(PutStudentDTO student);
+        Task<Result<object>> DeleteStudent(int id);
+        Task<Result<object>> EnrollStudentInCourse(StudentCourseDTO enrollmentDto);
     }
 }

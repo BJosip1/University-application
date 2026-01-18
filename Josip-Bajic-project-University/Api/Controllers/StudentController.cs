@@ -1,4 +1,6 @@
-﻿using Application.DTOs;
+﻿using Api.Common;
+using Application.Common;
+using Application.DTOs;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Repositories;
@@ -25,21 +27,14 @@ namespace Api.Controllers
         public async Task<IActionResult> GetAllStudents()
         {
             var result = await _studentService.GetAllStudents();
-            return Ok(result);
+            return this.HandleResult(result);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetStudentById(int id)
         {
-            try
-            {
-                var result = await _studentService.GetStudentById(id);
-                return Ok(result);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound($"Student with ID {id} not found.");
-            }
+            var result = await _studentService.GetStudentById(id);
+            return this.HandleResult(result);
         }
 
         [HttpGet("program-types")]
@@ -51,54 +46,37 @@ namespace Api.Controllers
                 Id = pt.Id,
                 Title = pt.Title
             });
-            return Ok(result);
+
+            return this.HandleResult(Result<IEnumerable<GetProgramTypeDTO>>.Success(result));
         }
 
         [HttpPost]
         public async Task<IActionResult> PostStudent([FromBody] PostStudentDTO student)
         {
             var result = await _studentService.AddStudent(student);
-            if (result.Contains("required") || result.Contains("not found"))
-                return BadRequest(result);
-            return Ok(result);
+            return this.HandleResult(result);
         }
 
         [HttpPut]
         public async Task<IActionResult> EditStudent([FromBody] PutStudentDTO student)
         {
             var result = await _studentService.UpdateStudent(student);
-            if (result.Contains("required") || result.Contains("not found"))
-                return BadRequest(result);
-            return Ok(result);
+            return this.HandleResult(result);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStudent(int id)
         {
-            try
-            {
                 var result = await _studentService.DeleteStudent(id);
-                return Ok(result);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound($"Student with ID {id} not found.");
-            }
+                return this.HandleResult(result);
         }
 
 
         [HttpPost("enroll")]
         public async Task<IActionResult> EnrollStudent([FromBody] StudentCourseDTO enrollmentDto)
         {
-            try
-            {
                 var result = await _studentService.EnrollStudentInCourse(enrollmentDto);
-                return Ok(result);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+                return this.HandleResult(result);
         }
     }
 }

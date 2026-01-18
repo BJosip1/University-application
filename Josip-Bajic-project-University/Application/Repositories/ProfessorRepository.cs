@@ -1,18 +1,20 @@
-﻿using Application.DTOs;
-using Application.Interfaces;
+﻿using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Repositories
 {
     public class ProfessorRepository:IProfessorRepository
     {
         private readonly IApplicationDbContext _dbContext;
+        private readonly ILogger<ProfessorRepository> _logger;
 
-        public ProfessorRepository(IApplicationDbContext dbContext)
+        public ProfessorRepository(IApplicationDbContext dbContext, ILogger<ProfessorRepository> logger)
         {
             _dbContext = dbContext;
+            _logger = logger;   
         }
 
         public async Task<IEnumerable<Professor>> GetProfessors()
@@ -34,7 +36,7 @@ namespace Application.Repositories
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (professor == null)
-                throw new KeyNotFoundException();
+                throw new KeyNotFoundException($"Cannot find professor with Id: {id}");
 
             return professor;
         }
@@ -63,7 +65,24 @@ namespace Application.Repositories
                 throw new KeyNotFoundException();
 
             _dbContext.Professors.Remove(professor);
-        }        
+        }
+
+        public async Task AssignCourseToProfessor(int professorId, int courseId)
+        {
+            var professor = await _dbContext.Professors.Include(p => p.TeachingCourses).FirstOrDefaultAsync(p => p.Id == professorId);
+
+            if (professor == null)
+                throw new KeyNotFoundException($"Professor {professorId} not found.");
+
+            var course = await _dbContext.Courses.FindAsync(courseId);
+            if (course == null)
+                throw new KeyNotFoundException($"Course {courseId} not found.");
+
+            if (!professor.TeachingCourses.Any(c => c.Id == courseId))
+            {
+                professor.TeachingCourses.Add(course);
+            }
+        }
     }
 }
 

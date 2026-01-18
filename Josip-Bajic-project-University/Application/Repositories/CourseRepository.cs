@@ -2,21 +2,25 @@
 using Application.Interfaces.Repositories;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Repositories
 {
     public class CourseRepository:ICourseRepository
     {
         private readonly IApplicationDbContext _dbContext;
+        private readonly ILogger<CourseRepository> _logger;
 
-        public CourseRepository(IApplicationDbContext dbContext)
+        public CourseRepository(IApplicationDbContext dbContext, ILogger<CourseRepository> logger)
         {
             _dbContext = dbContext;
+            _logger = logger;
         }
-
+        
         public async Task<IEnumerable<Course>> GetAllCourses()
         {
-            return await _dbContext.Courses.AsNoTracking().ToListAsync();
+            var course= await _dbContext.Courses.AsNoTracking().ToListAsync();
+            return course;
         }
 
         public async Task<Course> GetCourseById(int id)
@@ -24,7 +28,7 @@ namespace Application.Repositories
             var course = await _dbContext.Courses.Include(c => c.Students).Include(c => c.Professors).AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
 
             if (course == null)
-                throw new KeyNotFoundException();
+                throw new KeyNotFoundException($"Cannot find course with Id: {id}");
 
             return course;
         }
@@ -52,23 +56,6 @@ namespace Application.Repositories
                 throw new KeyNotFoundException();
 
             _dbContext.Courses.Remove(course);
-        }
-
-        public async Task AssignCourseToProfessor(int professorId, int courseId)
-        {
-            var course = await _dbContext.Courses.Include(c => c.Professors).FirstOrDefaultAsync(c => c.Id == courseId);
-
-            if (course == null)
-                throw new KeyNotFoundException($"Course {courseId} not found.");
-
-            var professor = await _dbContext.Professors.FindAsync(professorId);
-            if (professor == null)
-                throw new KeyNotFoundException($"Professor {professorId} not found.");
-
-            if (!course.Professors.Any(p => p.Id == professorId))
-            {
-                course.Professors.Add(professor);
-            }
         }
     }
 }
