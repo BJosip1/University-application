@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(UniversityDbContext))]
-    [Migration("20251222081713_InitialCreate")]
+    [Migration("20260121093200_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -48,6 +48,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CourseCode")
+                        .IsUnique();
 
                     b.ToTable("Courses", (string)null);
                 });

@@ -195,6 +195,12 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Courses_CourseCode",
+                table: "Courses",
+                column: "CourseCode",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ProfessorCourses_TeachingCoursesId",
                 table: "ProfessorCourses",
                 column: "TeachingCoursesId");

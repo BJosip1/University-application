@@ -3,6 +3,7 @@ using Application.DTOs;
 using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Repositories;
 using Domain.Models;
 
 namespace Application.Services
@@ -88,6 +89,8 @@ namespace Application.Services
                 result.ValidationItems.Add("Course code is required.");
             if (course.CourseCode.Length > 10)
                 result.ValidationItems.Add("Course code cannot exceed 10 characters.");
+            if (!await IsCourseCodeUnique(course.CourseCode, course.Id))
+                result.ValidationItems.Add("Course code must be unique.");
 
             if (string.IsNullOrWhiteSpace(course.Description))
                 result.ValidationItems.Add("Description is required.");
@@ -97,5 +100,12 @@ namespace Application.Services
             return result;
         }
 
+
+        private async Task<bool> IsCourseCodeUnique(string coursecode, int? courseId = null)
+        {
+            var courses = await _courseRepository.GetAllCourses();
+            var existingCourse = courses.FirstOrDefault(p => p.CourseCode == coursecode && (!courseId.HasValue || p.Id != courseId));
+            return existingCourse == null;
+        }
     }
 }

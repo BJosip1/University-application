@@ -46,6 +46,9 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CourseCode")
+                        .IsUnique();
+
                     b.ToTable("Courses", (string)null);
                 });
 

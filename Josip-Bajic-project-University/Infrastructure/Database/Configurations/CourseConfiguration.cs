@@ -27,6 +27,9 @@ namespace Infrastructure.Database.Configurations
                 .HasMaxLength(10)
                 .IsRequired();
 
+            builder.HasIndex(c => c.CourseCode)
+                .IsUnique();
+
             builder.Property(c => c.Description)
                 .HasMaxLength(1000)
                 .IsRequired(false);
